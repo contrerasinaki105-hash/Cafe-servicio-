@@ -22,7 +22,7 @@ export default async function RegisterPage({ params, searchParams }: { params: P
       <main className="mx-auto max-w-lg px-4 pb-16 pt-8 animate-rise">
         <h1 className="text-2xl font-semibold tracking-tight">Crea tu tarjeta digital</h1>
         <p className="mt-1 text-sm text-ink-muted">Tarda menos de un minuto.</p>
-        <div className="mt-6"><RegisterForm next={next} slug={slug} businessName={business.name} /></div>
+        <div className="mt-6"><RegisterForm next={next} country={business.country_code} slug={slug} businessName={business.name} /></div>
         <p className="mt-6 text-center text-sm text-ink-muted">¿Ya tienes cuenta? <Link href={`/c/${slug}/entrar${q}`} className="font-medium text-[var(--brand)] hover:underline">Entra aquí</Link></p>
       </main>
     </>

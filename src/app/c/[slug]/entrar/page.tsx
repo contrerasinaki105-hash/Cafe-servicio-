@@ -21,7 +21,7 @@ export default async function CustomerLoginPage({ params, searchParams }: { para
       <main className="mx-auto max-w-lg px-4 pb-16 pt-8 animate-rise">
         <h1 className="text-2xl font-semibold tracking-tight">Entra a tu tarjeta</h1>
         <p className="mt-1 text-sm text-ink-muted">Usa el teléfono con el que te registraste.</p>
-        <div className="mt-6"><LoginForm next={next} slug={slug} /></div>
+        <div className="mt-6"><LoginForm next={next} country={business.country_code} slug={slug} /></div>
         <p className="mt-6 text-center text-sm text-ink-muted">¿Aún no tienes tarjeta? <Link href={`/c/${slug}/registro${q}`} className="font-medium text-[var(--brand)] hover:underline">Créala gratis</Link></p>
         <p className="mt-3 text-center text-xs text-ink-muted">¿Olvidaste tu contraseña? Pídele al personal de {business.name} que la restablezca.</p>
       </main>

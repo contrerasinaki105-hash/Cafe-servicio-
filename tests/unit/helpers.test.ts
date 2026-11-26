@@ -9,6 +9,10 @@ describe('teléfonos', () => {
     expect(normalizePhone('55 1234 5678', 'MX')).toBe('+525512345678');
     expect(normalizePhone('+52 55-1234-5678', 'MX')).toBe('+525512345678');
   });
+  it('acepta números de Guatemala (8 dígitos)', () => {
+    expect(normalizePhone('5964 2409', 'GT')).toBe('+50259642409');
+    expect(normalizePhone('59642409', 'MX')).toBeNull();
+  });
   it('respeta el país del negocio', () => {
     expect(normalizePhone('300 123 4567', 'CO')).toBe('+573001234567');
   });

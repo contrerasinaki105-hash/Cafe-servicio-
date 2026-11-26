@@ -5,6 +5,7 @@ import { customerJoin, customerLogin, customerRegister } from '@/server/auth-act
 import { Checkbox, Field, Input } from '@/components/ui/field';
 import { SubmitButton } from '@/components/ui/submit-button';
 import { FormMessage } from '@/components/ui/form-message';
+import { PhoneInput } from '@/components/ui/phone-input';
 
 function Consents({ slug, businessName }: { slug: string; businessName: string }) {
   return (
@@ -15,7 +16,7 @@ function Consents({ slug, businessName }: { slug: string; businessName: string }
   );
 }
 
-export function RegisterForm({ slug, businessName, next }: { slug: string; businessName: string; next?: string }) {
+export function RegisterForm({ slug, businessName, next, country }: { slug: string; businessName: string; next?: string; country: string }) {
   const [state, action] = useActionState(customerRegister.bind(null, slug), null);
   const fe = state && !state.ok ? state.fieldErrors : undefined;
   const v = state && !state.ok ? state.values : undefined;
@@ -28,7 +29,7 @@ export function RegisterForm({ slug, businessName, next }: { slug: string; busin
         <Field label="Apellido" htmlFor="lastName" error={fe?.lastName}><Input id="lastName" name="lastName" defaultValue={v?.lastName} autoComplete="family-name" required /></Field>
       </div>
       <Field label="Teléfono celular" htmlFor="phone" error={fe?.phone} hint="Será tu usuario para entrar.">
-        <Input id="phone" name="phone" defaultValue={v?.phone} type="tel" inputMode="tel" autoComplete="tel" required placeholder="55 1234 5678" />
+        <PhoneInput id="phone" defaultCountry={v?.country || country} defaultValue={v?.phone} invalid={!!fe?.phone} />
       </Field>
       <Field label="Correo electrónico" htmlFor="email" error={fe?.email} optional>
         <Input id="email" name="email" defaultValue={v?.email} type="email" autoComplete="email" />
@@ -46,7 +47,7 @@ export function RegisterForm({ slug, businessName, next }: { slug: string; busin
   );
 }
 
-export function LoginForm({ slug, next }: { slug: string; next?: string }) {
+export function LoginForm({ slug, next, country }: { slug: string; next?: string; country: string }) {
   const [state, action] = useActionState(customerLogin.bind(null, slug), null);
   const fe = state && !state.ok ? state.fieldErrors : undefined;
   const v = state && !state.ok ? state.values : undefined;
@@ -55,7 +56,7 @@ export function LoginForm({ slug, next }: { slug: string; next?: string }) {
       <input type="hidden" name="next" value={next ?? ''} />
       <FormMessage state={state} />
       <Field label="Teléfono celular" htmlFor="phone" error={fe?.phone}>
-        <Input id="phone" name="phone" defaultValue={v?.phone} type="tel" inputMode="tel" autoComplete="tel" required autoFocus />
+        <PhoneInput id="phone" defaultCountry={v?.country || country} defaultValue={v?.phone} invalid={!!fe?.phone} autoFocus />
       </Field>
       <Field label="Contraseña" htmlFor="password" error={fe?.password}>
         <Input id="password" name="password" type="password" autoComplete="current-password" required />

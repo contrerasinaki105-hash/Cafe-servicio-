@@ -7,6 +7,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { publicEnv } from '@/lib/env';
 import { customerAuthEmail } from '@/lib/customer-identity';
 import { normalizePhone } from '@/lib/phone';
+import { pickCountry } from '@/lib/countries';
 import { friendlyError } from '@/lib/errors';
 import { getPublicBusiness } from '@/lib/auth/customer';
 import {
@@ -29,7 +30,7 @@ const TOO_MANY: ActionResult = { ok: false, error: 'Demasiados intentos. Espera 
 function keep(formData: FormData, fields: string[]) {
   return Object.fromEntries(fields.map((f) => [f, String(formData.get(f) ?? '')]));
 }
-const REGISTER_FIELDS = ['firstName', 'lastName', 'phone', 'email'];
+const REGISTER_FIELDS = ['firstName', 'lastName', 'phone', 'email', 'country'];
 
 /** Destino tras el login del cliente: solo se permite volver a un QR de sello. */
 function claimNext(formData: FormData) {
@@ -153,7 +154,7 @@ export async function customerRegister(slug: string, _: ActionResult | null, for
     acceptTerms: formData.get('acceptTerms') === 'on',
   });
   if (!parsed.success) return { ok: false, error: 'Revisa los campos marcados.', fieldErrors: fieldErrors(parsed.error), values: keep(formData, REGISTER_FIELDS) };
-  const phone = normalizePhone(parsed.data.phone, business.country_code);
+  const phone = normalizePhone(parsed.data.phone, pickCountry(formData.get('country'), business.country_code));
   if (!phone) return { ok: false, error: 'El teléfono no es válido.', fieldErrors: { phone: 'Revisa el número (10 dígitos).' }, values: keep(formData, REGISTER_FIELDS) };
   if (!(await rateLimit('customer-register', 10, 3600))) return { ...TOO_MANY, values: keep(formData, REGISTER_FIELDS) } as ActionResult;
 
@@ -199,16 +200,16 @@ export async function customerRegister(slug: string, _: ActionResult | null, for
 
 export async function customerLogin(slug: string, _: ActionResult | null, formData: FormData): Promise<ActionResult> {
   const business = await getPublicBusiness(slug);
-  if (!business) return { ok: false, error: 'Este negocio no existe o no está activo.', values: keep(formData, ['phone']) };
+  if (!business) return { ok: false, error: 'Este negocio no existe o no está activo.', values: keep(formData, ['phone', 'country']) };
   const parsed = customerLoginSchema.safeParse({ phone: formData.get('phone'), password: formData.get('password') });
-  if (!parsed.success) return { ok: false, error: 'Revisa los datos.', fieldErrors: fieldErrors(parsed.error), values: keep(formData, ['phone']) };
-  const phone = normalizePhone(parsed.data.phone, business.country_code);
-  if (!phone) return { ok: false, error: 'El teléfono no es válido.', fieldErrors: { phone: 'Revisa el número.' }, values: keep(formData, ['phone']) };
-  if (!(await rateLimit('customer-login', 15, 600))) return { ...TOO_MANY, values: keep(formData, ['phone']) } as ActionResult;
+  if (!parsed.success) return { ok: false, error: 'Revisa los datos.', fieldErrors: fieldErrors(parsed.error), values: keep(formData, ['phone', 'country']) };
+  const phone = normalizePhone(parsed.data.phone, pickCountry(formData.get('country'), business.country_code));
+  if (!phone) return { ok: false, error: 'El teléfono no es válido.', fieldErrors: { phone: 'Revisa el número.' }, values: keep(formData, ['phone', 'country']) };
+  if (!(await rateLimit('customer-login', 15, 600))) return { ...TOO_MANY, values: keep(formData, ['phone', 'country']) } as ActionResult;
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword({ email: customerAuthEmail(phone), password: parsed.data.password });
-  if (error || !data.user) return { ok: false, error: 'Teléfono o contraseña incorrectos.', values: keep(formData, ['phone']) };
+  if (error || !data.user) return { ok: false, error: 'Teléfono o contraseña incorrectos.', values: keep(formData, ['phone', 'country']) };
 
   const { data: customer } = await supabase
     .from('customers')
