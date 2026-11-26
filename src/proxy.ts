@@ -18,7 +18,7 @@ async function resolveCustomDomain(host: string): Promise<string | null> {
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/resolve_business_domain`, {
       method: 'POST',
-      headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}`, 'Content-Type': 'application/json' },
+      headers: { apikey: SUPABASE_ANON, 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_host: host }),
     });
     if (res.ok) slug = (await res.json()) ?? null;
