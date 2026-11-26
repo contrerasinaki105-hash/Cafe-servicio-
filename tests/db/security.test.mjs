@@ -180,3 +180,21 @@ test('auditoría: las operaciones administrativas quedan registradas', async () 
   }
   assert.ok(logs.find(l => l.action === 'visit.registered').actor_id === A.employee);
 });
+
+test('perfil: se sincroniza cuando Supabase Auth escribe app_metadata después del alta', async () => {
+  // Supabase Auth inserta el usuario y luego actualiza raw_app_meta_data.
+  const id = randomUUID();
+  await admin(`insert into auth.users(id, email, raw_app_meta_data) values ($1, $2, '{"provider":"email"}')`,
+    [id, `tel-5215577700000@clientes.webya.app`]);
+  let [p] = await admin(`select kind, phone from public.profiles where id = $1`, [id]);
+  assert.equal(p.kind, 'staff');
+  await admin(`update auth.users set raw_app_meta_data = $2 where id = $1`,
+    [id, { provider: 'email', kind: 'customer', phone: '+5215577700000', full_name: 'Sync Test' }]);
+  [p] = await admin(`select kind, phone, email, full_name from public.profiles where id = $1`, [id]);
+  assert.equal(p.kind, 'customer');
+  assert.equal(p.phone, '+5215577700000');
+  assert.equal(p.email, null);
+  assert.equal(p.full_name, 'Sync Test');
+  const [{ c }] = await as(user(id), `select public.join_business('sec-aurora', 'Sync', 'Test') as c`);
+  assert.ok(c);
+});
