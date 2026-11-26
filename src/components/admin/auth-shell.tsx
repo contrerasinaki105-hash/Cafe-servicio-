@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import Image from 'next/image';
+import { RemoteImage as Image } from '@/components/ui/remote-image';
 import { WebyaLogo } from '@/components/brand/logo';
 import { readableOn } from '@/lib/utils';
 
