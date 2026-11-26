@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { Activity, Gift, Stamp, TicketCheck, UserCheck, UserMinus, UserPlus, Users } from 'lucide-react';
+import { Activity, Gift, ScanLine, Stamp, TicketCheck, UserCheck, UserMinus, UserPlus, Users } from 'lucide-react';
 import { requireStaff } from '@/lib/auth/staff';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/ui/page-header';
@@ -40,7 +40,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       <PageHeader
         title={`Hola${ctx.fullName ? `, ${ctx.fullName.split(' ')[0]}` : ''}`}
         description={`Resumen de ${ctx.business.name}. Datos en tiempo real · zona horaria ${s.timezone}.`}
-        actions={<Link href="/admin/compra" className={buttonClasses('brand')}>Registrar compra</Link>}
+        actions={<><Link href="/admin/compra?escanear=1" className={buttonClasses('secondary')}><ScanLine className="size-4" /> Escanear cliente</Link><Link href="/admin/compra" className={buttonClasses('brand')}>Registrar compra</Link></>}
       />
 
       <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4" aria-label="Indicadores principales">

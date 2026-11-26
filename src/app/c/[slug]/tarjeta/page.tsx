@@ -8,6 +8,7 @@ import { BottomNav } from '@/components/portal/bottom-nav';
 import { LoyaltyCard } from '@/components/portal/loyalty-card';
 import { Notifications } from '@/components/portal/notifications';
 import { RemoteImage } from '@/components/ui/remote-image';
+import { headers } from 'next/headers';
 import { formatDate, requestTime } from '@/lib/utils';
 import type { NotificationRow, Promotion, Reward } from '@/lib/types';
 
@@ -33,7 +34,9 @@ export default async function CardPage({ params, searchParams }: { params: Promi
   const rewardList = (rewards ?? []) as Reward[];
   const now = requestTime();
   const activeRewards = rewardList.filter((r) => (!r.valid_until || new Date(r.valid_until).getTime() > now) && (!r.valid_from || new Date(r.valid_from).getTime() <= now));
-  const qr = await QRCode.toDataURL(`webya:${customer.qr_token}`, { width: 480, margin: 1, color: { dark: '#241810', light: '#FFFFFF' } });
+  const h = await headers();
+  const origin = `${h.get('x-forwarded-proto') ?? 'https'}://${h.get('x-forwarded-host') ?? h.get('host')}`;
+  const qr = await QRCode.toDataURL(`${origin}/admin/q/${customer.qr_token}`, { width: 480, margin: 1, color: { dark: '#241810', light: '#FFFFFF' } });
 
   return (
     <>

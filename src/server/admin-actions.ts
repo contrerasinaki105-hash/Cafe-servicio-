@@ -51,7 +51,7 @@ export async function searchCustomers(query: string): Promise<ActionResult<Custo
   const supabase = await createClient();
   let request = supabase.from('customer_overview').select('*').eq('business_id', ctx.business.id).limit(8);
 
-  const qrMatch = q.match(/(?:webya:)?([a-f0-9]{24})$/i);
+  const qrMatch = q.match(/(?:^webya:|\/admin\/q\/|^)([a-f0-9]{24})$/i);
   const digits = q.replace(/\D/g, '');
   if (qrMatch) {
     request = request.eq('qr_token', qrMatch[1].toLowerCase());

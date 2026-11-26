@@ -6,10 +6,10 @@ import type { StaffRole } from '@/lib/types';
 import { Counter } from './counter';
 import { QrClaimPanel } from './qr-claim-panel';
 
-interface Props { role: StaffRole; maxStamps: number; stampsRequired: number; currency: string; timezone: string }
+interface Props { role: StaffRole; maxStamps: number; stampsRequired: number; currency: string; timezone: string; initialCustomerId?: string; autoScan?: boolean }
 
 export function PurchaseModes(props: Props) {
-  const [mode, setMode] = useState<'qr' | 'search'>('qr');
+  const [mode, setMode] = useState<'qr' | 'search'>(props.initialCustomerId || props.autoScan ? 'search' : 'qr');
   const limit = props.role === 'employee' ? props.maxStamps : 20;
   return (
     <>

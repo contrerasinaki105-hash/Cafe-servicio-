@@ -7,8 +7,10 @@ import { PurchaseModes } from './purchase-modes';
 
 export const metadata: Metadata = { title: 'Registrar compra' };
 
-export default async function PurchasePage() {
+export default async function PurchasePage({ searchParams }: { searchParams: Promise<{ cliente?: string; escanear?: string }> }) {
   const ctx = await requireStaff();
+  const sp = await searchParams;
+  const initialCustomerId = sp.cliente && /^[0-9a-f-]{36}$/i.test(sp.cliente) ? sp.cliente : undefined;
   const supabase = await createClient();
   const { data: program } = await supabase
     .from('loyalty_programs')
@@ -27,6 +29,8 @@ export default async function PurchasePage() {
           stampsRequired={program.stamps_required}
           currency={ctx.business.currency}
           timezone={ctx.business.timezone}
+          initialCustomerId={initialCustomerId}
+          autoScan={sp.escanear === '1'}
         />
       ) : (
         <p className="text-sm text-ink-muted">El negocio no tiene un programa de fidelización activo.</p>

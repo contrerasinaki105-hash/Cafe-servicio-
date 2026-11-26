@@ -15,7 +15,8 @@ import { cn, formatDate, formatMoney, formatRelative } from '@/lib/utils';
 import { formatPhone } from '@/lib/phone';
 import type { CustomerOverview, StaffRole } from '@/lib/types';
 
-const QR_PATTERN = /^(?:webya:)?[a-f0-9]{24}$/i;
+// Contenido del QR personal: enlace .../admin/q/<código> o el formato anterior webya:<código>
+const QR_PATTERN = /(?:^webya:|\/admin\/q\/|^)[a-f0-9]{24}$/i;
 
 type CounterData = NonNullable<Awaited<ReturnType<typeof getCustomerForCounter>>>;
 
@@ -25,15 +26,17 @@ interface Props {
   stampsRequired: number;
   currency: string;
   timezone: string;
+  initialCustomerId?: string;
+  autoScan?: boolean;
 }
 
-export function Counter({ role, maxStamps, stampsRequired, currency, timezone }: Props) {
+export function Counter({ role, maxStamps, stampsRequired, currency, timezone, initialCustomerId, autoScan }: Props) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<CustomerOverview[] | null>(null);
   const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState<CounterData | null>(null);
   const [loadingCustomer, setLoadingCustomer] = useState(false);
-  const [scanOpen, setScanOpen] = useState(false);
+  const [scanOpen, setScanOpen] = useState(Boolean(autoScan));
   const [newOpen, setNewOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const isManager = role !== 'employee';
@@ -51,6 +54,15 @@ export function Counter({ role, maxStamps, stampsRequired, currency, timezone }:
     setResults(null);
     setQuery('');
   }, []);
+
+  // Cliente abierto desde un QR escaneado con la cámara del teléfono (/admin/q/...)
+  const preloaded = useRef(false);
+  useEffect(() => {
+    if (initialCustomerId && !preloaded.current) {
+      preloaded.current = true;
+      openCustomer(initialCustomerId);
+    }
+  }, [initialCustomerId, openCustomer]);
 
   // Búsqueda con espera breve mientras se escribe
   useEffect(() => {
