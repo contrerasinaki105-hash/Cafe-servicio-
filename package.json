@@ -1,0 +1,48 @@
+{
+  "name": "webya-loyalty",
+  "version": "1.0.0",
+  "private": true,
+  "description": "WebYA Loyalty System — plataforma multiempresa de fidelización para cafeterías y restaurantes",
+  "license": "UNLICENSED",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run test:unit && npm run test:db",
+    "test:unit": "vitest run",
+    "test:db": "./scripts/test-db.sh",
+    "create-business": "node --env-file=.env.local scripts/create-business.mjs"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.119.2",
+    "clsx": "^2.1.1",
+    "geist": "^1.9.2",
+    "jsqr": "^1.4.0",
+    "libphonenumber-js": "^1.13.17",
+    "lucide-react": "^1.80.0",
+    "next": "^16.4.6",
+    "qrcode": "^1.5.4",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "recharts": "^3.11.1",
+    "sonner": "^2.0.8",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.5",
+    "@types/node": "^26.6.11",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^19.3.3",
+    "@types/react-dom": "^19.3.0",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.4.6",
+    "pg": "^8.23.1",
+    "postcss": "^8.5.33",
+    "tailwindcss": "^4.3.5",
+    "typescript": "^6.0.3",
+    "vitest": "^5.1.2"
+  }
+}
