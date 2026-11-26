@@ -34,6 +34,11 @@ const MESSAGES: Record<string, string> = {
   SLUG_TAKEN: 'Ese identificador ya está en uso.',
   PROMOTION_INACTIVE: 'La promoción no está activa o ya terminó.',
   ALREADY_SENT: 'Esta campaña ya fue enviada.',
+  INVALID_CODE: 'Este código QR no es válido.',
+  CODE_ALREADY_USED: 'Este código QR ya fue utilizado.',
+  CODE_CANCELLED: 'Este código QR fue cancelado por el personal.',
+  CODE_EXPIRED: 'Este código QR caducó. Pide uno nuevo en caja.',
+  NOT_REGISTERED: 'Primero crea tu tarjeta en este negocio.',
 };
 
 export function friendlyError(error: unknown, fallback = 'Ocurrió un error inesperado. Inténtalo de nuevo.'): string {

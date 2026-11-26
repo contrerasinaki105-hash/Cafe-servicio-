@@ -31,6 +31,12 @@ function keep(formData: FormData, fields: string[]) {
 }
 const REGISTER_FIELDS = ['firstName', 'lastName', 'phone', 'email'];
 
+/** Destino tras el login del cliente: solo se permite volver a un QR de sello. */
+function claimNext(formData: FormData) {
+  const v = String(formData.get('next') ?? '');
+  return /^\/s\/[a-f0-9]{36}$/.test(v) ? v : null;
+}
+
 function safeNext(next: FormDataEntryValue | null, fallback: string) {
   const v = typeof next === 'string' ? next : '';
   return v.startsWith('/') && !v.startsWith('//') ? v : fallback;
@@ -188,7 +194,7 @@ export async function customerRegister(slug: string, _: ActionResult | null, for
     p_marketing_opt_in: parsed.data.marketingOptIn,
   });
   if (error) return { ok: false, error: friendlyError(error), values: keep(formData, REGISTER_FIELDS) };
-  redirect(`/c/${slug}/tarjeta?bienvenida=1`);
+  redirect(claimNext(formData) ?? `/c/${slug}/tarjeta?bienvenida=1`);
 }
 
 export async function customerLogin(slug: string, _: ActionResult | null, formData: FormData): Promise<ActionResult> {
@@ -210,7 +216,9 @@ export async function customerLogin(slug: string, _: ActionResult | null, formDa
     .eq('business_id', business.id)
     .eq('user_id', data.user.id)
     .maybeSingle();
-  redirect(customer ? `/c/${slug}/tarjeta` : `/c/${slug}/unirse`);
+  const next = claimNext(formData);
+  if (customer) redirect(next ?? `/c/${slug}/tarjeta`);
+  redirect(`/c/${slug}/unirse${next ? `?next=${encodeURIComponent(next)}` : ''}`);
 }
 
 /** Cliente con cuenta existente que se une a otro negocio. */
@@ -230,5 +238,5 @@ export async function customerJoin(slug: string, _: ActionResult | null, formDat
     p_marketing_opt_in: formData.get('marketingOptIn') === 'on',
   });
   if (error) return { ok: false, error: friendlyError(error) };
-  redirect(`/c/${slug}/tarjeta?bienvenida=1`);
+  redirect(claimNext(formData) ?? `/c/${slug}/tarjeta?bienvenida=1`);
 }

@@ -25,3 +25,12 @@ export async function customerSignOut(slug: string) {
   await supabase.auth.signOut();
   redirect(`/c/${slug}`);
 }
+
+export async function claimStamps(token: string): Promise<ActionResult<{ slug: string; stamps: number; stamp_balance: number; new_rewards: number; duplicate: boolean }>> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc('claim_stamps', { p_token: token });
+  if (error) return { ok: false, error: friendlyError(error) };
+  const r = data as { slug: string; stamps: number; stamp_balance: number; new_rewards: number; duplicate: boolean };
+  revalidatePath(`/c/${r.slug}`, 'layout');
+  return { ok: true, data: r };
+}

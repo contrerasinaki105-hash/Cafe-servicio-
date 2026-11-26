@@ -514,3 +514,37 @@ export async function sendPromotion(promotionId: string): Promise<ActionResult> 
   if (r.email_queued) parts.push(`${r.email_queued} correos en cola (pendiente de integración)`);
   return { ok: true, message: parts.join(' · ') + '.' };
 }
+
+// ---------------------------------------------------------------------
+// QR de sello de un solo uso (el cliente lo escanea con su teléfono)
+// ---------------------------------------------------------------------
+export async function createStampClaim(stamps: number, amount: string): Promise<ActionResult<{ id: string; token: string; expires_at: string; stamps: number }>> {
+  const ctx = await authorizeStaff(ALL);
+  if (!ctx) return DENIED;
+  const n = Number(stamps);
+  const amt = amount.trim() === '' ? null : Number(amount);
+  if (!Number.isInteger(n) || n < 1 || n > 20) return { ok: false, error: 'Cantidad de sellos no válida.' };
+  if (amt !== null && (!Number.isFinite(amt) || amt < 0)) return { ok: false, error: 'Importe no válido.' };
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc('create_stamp_claim', { p_business: ctx.business.id, p_stamps: n, p_amount: amt, p_ttl_seconds: 120 });
+  if (error) return { ok: false, error: friendlyError(error) };
+  return { ok: true, data: data as { id: string; token: string; expires_at: string; stamps: number } };
+}
+
+export async function getStampClaimStatus(claimId: string): Promise<ActionResult<{ status: string; customer_name: string | null }>> {
+  const ctx = await authorizeStaff(ALL);
+  if (!ctx) return DENIED;
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc('get_stamp_claim_status', { p_business: ctx.business.id, p_claim: claimId });
+  if (error) return { ok: false, error: friendlyError(error) };
+  const d = data as { status: string; customer_name: string | null };
+  if (d.status === 'claimed') refresh();
+  return { ok: true, data: d };
+}
+
+export async function cancelStampClaim(claimId: string): Promise<void> {
+  const ctx = await authorizeStaff(ALL);
+  if (!ctx) return;
+  const supabase = await createClient();
+  await supabase.rpc('cancel_stamp_claim', { p_business: ctx.business.id, p_claim: claimId });
+}

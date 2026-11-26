@@ -50,7 +50,7 @@ export async function proxy(request: NextRequest) {
   // Dominio/subdominio de un negocio: la raíz y las rutas del portal se
   // reescriben al portal del cliente de ese negocio. /admin se mantiene.
   let rewriteTo: URL | null = null;
-  if (tenant && !pathname.startsWith('/admin') && !pathname.startsWith('/auth') && !pathname.startsWith('/c/')
+  if (tenant && !pathname.startsWith('/admin') && !pathname.startsWith('/auth') && !pathname.startsWith('/c/') && !pathname.startsWith('/s/')
       && !pathname.startsWith('/platform')) {
     rewriteTo = request.nextUrl.clone();
     rewriteTo.pathname = `/c/${tenant}${pathname === '/' ? '' : pathname}`;

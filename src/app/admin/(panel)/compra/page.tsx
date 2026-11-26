@@ -3,7 +3,7 @@ import { requireStaff } from '@/lib/auth/staff';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/ui/page-header';
 import type { LoyaltyProgram } from '@/lib/types';
-import { Counter } from './counter';
+import { PurchaseModes } from './purchase-modes';
 
 export const metadata: Metadata = { title: 'Registrar compra' };
 
@@ -21,7 +21,7 @@ export default async function PurchasePage() {
     <>
       <PageHeader title="Registrar compra" description={program ? `${program.stamps_required} sellos = ${program.reward_description}` : undefined} />
       {program ? (
-        <Counter
+        <PurchaseModes
           role={ctx.role}
           maxStamps={program.max_stamps_per_visit}
           stampsRequired={program.stamps_required}

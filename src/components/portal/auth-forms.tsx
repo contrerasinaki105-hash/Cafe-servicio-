@@ -15,12 +15,13 @@ function Consents({ slug, businessName }: { slug: string; businessName: string }
   );
 }
 
-export function RegisterForm({ slug, businessName }: { slug: string; businessName: string }) {
+export function RegisterForm({ slug, businessName, next }: { slug: string; businessName: string; next?: string }) {
   const [state, action] = useActionState(customerRegister.bind(null, slug), null);
   const fe = state && !state.ok ? state.fieldErrors : undefined;
   const v = state && !state.ok ? state.values : undefined;
   return (
     <form action={action} className="space-y-4" noValidate>
+      <input type="hidden" name="next" value={next ?? ''} />
       <FormMessage state={state} />
       <div className="grid grid-cols-2 gap-3">
         <Field label="Nombre" htmlFor="firstName" error={fe?.firstName}><Input id="firstName" name="firstName" defaultValue={v?.firstName} autoComplete="given-name" required /></Field>
@@ -45,12 +46,13 @@ export function RegisterForm({ slug, businessName }: { slug: string; businessNam
   );
 }
 
-export function LoginForm({ slug }: { slug: string }) {
+export function LoginForm({ slug, next }: { slug: string; next?: string }) {
   const [state, action] = useActionState(customerLogin.bind(null, slug), null);
   const fe = state && !state.ok ? state.fieldErrors : undefined;
   const v = state && !state.ok ? state.values : undefined;
   return (
     <form action={action} className="space-y-4" noValidate>
+      <input type="hidden" name="next" value={next ?? ''} />
       <FormMessage state={state} />
       <Field label="Teléfono celular" htmlFor="phone" error={fe?.phone}>
         <Input id="phone" name="phone" defaultValue={v?.phone} type="tel" inputMode="tel" autoComplete="tel" required autoFocus />
@@ -63,10 +65,11 @@ export function LoginForm({ slug }: { slug: string }) {
   );
 }
 
-export function JoinForm({ slug, businessName, defaultName }: { slug: string; businessName: string; defaultName?: { first: string; last: string } }) {
+export function JoinForm({ slug, businessName, defaultName, next }: { slug: string; businessName: string; defaultName?: { first: string; last: string }; next?: string }) {
   const [state, action] = useActionState(customerJoin.bind(null, slug), null);
   return (
     <form action={action} className="space-y-4">
+      <input type="hidden" name="next" value={next ?? ''} />
       <FormMessage state={state} />
       <div className="grid grid-cols-2 gap-3">
         <Field label="Nombre" htmlFor="firstName"><Input id="firstName" name="firstName" defaultValue={defaultName?.first} required /></Field>
