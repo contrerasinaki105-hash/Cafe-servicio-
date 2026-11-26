@@ -58,3 +58,8 @@ export function readableOn(hex: string) {
   const L = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
   return L > 0.45 ? '#2B1D14' : '#FFFFFF';
 }
+
+/** Hora de la petición (para cálculos de vigencia en el servidor). */
+export function requestTime() {
+  return Date.now();
+}

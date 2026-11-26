@@ -40,11 +40,7 @@ export function Counter({ role, maxStamps, stampsRequired, currency, timezone }:
   // Búsqueda con espera breve mientras se escribe
   useEffect(() => {
     const q = query.trim();
-    if (q.length < 2) {
-      setResults(null);
-      return;
-    }
-    setSearching(true);
+    if (q.length < 2) return;
     const t = setTimeout(async () => {
       const res = await searchCustomers(q);
       setSearching(false);
@@ -99,7 +95,12 @@ export function Counter({ role, maxStamps, stampsRequired, currency, timezone }:
                 placeholder="Teléfono, nombre o código"
                 className="h-12 pl-10 text-base"
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  const long = e.target.value.trim().length >= 2;
+                  setSearching(long);
+                  if (!long) setResults(null);
+                }}
               />
             </div>
             <Button variant="secondary" size="lg" onClick={() => setScanOpen(true)} aria-label="Escanear código QR">

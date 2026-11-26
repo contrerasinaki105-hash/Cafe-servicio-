@@ -23,7 +23,7 @@ const toLocalInput = (iso: string | null) => {
   return new Date(d.getTime() - off * 60000).toISOString().slice(0, 16);
 };
 
-export function RewardManager({ rewards, canEdit, timezone }: { rewards: RewardWithStats[]; canEdit: boolean; timezone: string }) {
+export function RewardManager({ rewards, canEdit, timezone, now }: { rewards: RewardWithStats[]; canEdit: boolean; timezone: string; now: number }) {
   const [editing, setEditing] = useState<RewardWithStats | 'new' | null>(null);
   const [toDelete, setToDelete] = useState<RewardWithStats | null>(null);
   const [pending, start] = useTransition();
@@ -40,7 +40,6 @@ export function RewardManager({ rewards, canEdit, timezone }: { rewards: RewardW
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {rewards.map((r) => {
-            const now = Date.now();
             const ended = r.valid_until && new Date(r.valid_until).getTime() < now;
             const upcoming = r.valid_from && new Date(r.valid_from).getTime() > now;
             return (

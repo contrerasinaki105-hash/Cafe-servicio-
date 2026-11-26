@@ -3,7 +3,7 @@ import { requireStaff } from '@/lib/auth/staff';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardHeader } from '@/components/ui/card';
-import { formatDate } from '@/lib/utils';
+import { formatDate, requestTime } from '@/lib/utils';
 import type { Reward } from '@/lib/types';
 import { RewardManager } from './reward-manager';
 
@@ -37,7 +37,7 @@ export default async function RewardsPage() {
   return (
     <>
       <PageHeader title="Recompensas" description="Cuando un cliente alcanza los sellos, la recompensa se genera automáticamente y el personal confirma el canje." />
-      <RewardManager rewards={withStats} canEdit={ctx.role === 'owner'} timezone={ctx.business.timezone} />
+      <RewardManager rewards={withStats} canEdit={ctx.role === 'owner'} timezone={ctx.business.timezone} now={requestTime()} />
       <Card className="mt-6">
         <CardHeader title="Últimos canjes" />
         {!recent?.length ? (

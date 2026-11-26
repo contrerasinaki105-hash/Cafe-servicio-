@@ -8,8 +8,8 @@ import { assertSupabaseConfigured, publicEnv } from '@/lib/env';
  * Todas las consultas pasan por RLS con la identidad del usuario.
  */
 export async function createClient() {
+  const cookieStore = await cookies(); // marca la ruta como dinámica
   assertSupabaseConfigured();
-  const cookieStore = await cookies();
   return createServerClient(publicEnv.supabaseUrl, publicEnv.supabaseAnonKey, {
     cookies: {
       getAll() {

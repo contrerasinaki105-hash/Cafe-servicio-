@@ -3,6 +3,7 @@ import { requireStaff } from '@/lib/auth/staff';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/ui/page-header';
 import type { CustomerInsights, Promotion } from '@/lib/types';
+import { requestTime } from '@/lib/utils';
 import { PromotionManager } from './promotion-manager';
 
 export const metadata: Metadata = { title: 'Promociones' };
@@ -23,7 +24,7 @@ export default async function PromotionsPage() {
         title="Promociones"
         description={`${optIn ?? 0} de ${total ?? 0} clientes aceptan recibir promociones. Las comunicaciones respetan siempre su consentimiento.`}
       />
-      <PromotionManager promotions={(promotions ?? []) as Promotion[]} timezone={ctx.business.timezone} segmentCounts={counts} />
+      <PromotionManager promotions={(promotions ?? []) as Promotion[]} timezone={ctx.business.timezone} segmentCounts={counts} now={requestTime()} />
     </>
   );
 }

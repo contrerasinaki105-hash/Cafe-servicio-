@@ -10,7 +10,7 @@ import { Input, Select } from '@/components/ui/field';
 import { Button, buttonClasses } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { NewCustomerButton } from '@/components/admin/new-customer-button';
-import { cn, formatDate, formatNumber, formatRelative } from '@/lib/utils';
+import { cn, formatDate, formatNumber, formatRelative, requestTime } from '@/lib/utils';
 import { formatPhone } from '@/lib/phone';
 import type { CustomerOverview } from '@/lib/types';
 
@@ -35,7 +35,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
   const sort: SortKey = (sp.orden as SortKey) in SORTS ? (sp.orden as SortKey) : 'recent';
   const page = Math.max(1, Number(sp.pagina) || 1);
   const days = ctx.business.inactive_after_days;
-  const cutoff = new Date(Date.now() - days * 86400000).toISOString();
+  const cutoff = new Date(requestTime() - days * 86400000).toISOString();
 
   const supabase = await createClient();
   let query = supabase.from('customer_overview').select('*', { count: 'exact' }).eq('business_id', ctx.business.id);

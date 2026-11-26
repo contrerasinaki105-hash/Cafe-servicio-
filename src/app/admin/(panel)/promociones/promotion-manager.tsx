@@ -20,7 +20,7 @@ const toLocalInput = (iso: string | null) => {
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 };
 
-export function PromotionManager({ promotions, timezone, segmentCounts }: { promotions: Promotion[]; timezone: string; segmentCounts: Record<string, number> }) {
+export function PromotionManager({ promotions, timezone, segmentCounts, now }: { promotions: Promotion[]; timezone: string; segmentCounts: Record<string, number>; now: number }) {
   const [editing, setEditing] = useState<Promotion | 'new' | null>(null);
   const [sending, setSending] = useState<Promotion | null>(null);
   const [pending, start] = useTransition();
@@ -37,7 +37,6 @@ export function PromotionManager({ promotions, timezone, segmentCounts }: { prom
       ) : (
         <div className="space-y-3">
           {promotions.map((p) => {
-            const now = Date.now();
             const ended = p.ends_at && new Date(p.ends_at).getTime() < now;
             const live = p.is_active && !ended && new Date(p.starts_at).getTime() <= now;
             return (
