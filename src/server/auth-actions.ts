@@ -25,6 +25,12 @@ import { rateLimit } from './rate-limit';
 
 const TOO_MANY: ActionResult = { ok: false, error: 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.' };
 
+/** Valores no sensibles para volver a rellenar el formulario tras un error. */
+function keep(formData: FormData, fields: string[]) {
+  return Object.fromEntries(fields.map((f) => [f, String(formData.get(f) ?? '')]));
+}
+const REGISTER_FIELDS = ['firstName', 'lastName', 'phone', 'email'];
+
 function safeNext(next: FormDataEntryValue | null, fallback: string) {
   const v = typeof next === 'string' ? next : '';
   return v.startsWith('/') && !v.startsWith('//') ? v : fallback;
@@ -36,12 +42,12 @@ function safeNext(next: FormDataEntryValue | null, fallback: string) {
 
 export async function staffLogin(_: ActionResult | null, formData: FormData): Promise<ActionResult> {
   const parsed = staffLoginSchema.safeParse({ email: formData.get('email'), password: formData.get('password') });
-  if (!parsed.success) return { ok: false, error: 'Revisa los datos.', fieldErrors: fieldErrors(parsed.error) };
-  if (!(await rateLimit('staff-login', 10, 600))) return TOO_MANY;
+  if (!parsed.success) return { ok: false, error: 'Revisa los datos.', fieldErrors: fieldErrors(parsed.error), values: keep(formData, ['email']) };
+  if (!(await rateLimit('staff-login', 10, 600))) return { ...TOO_MANY, values: keep(formData, ['email']) } as ActionResult;
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
-  if (error || !data.user) return { ok: false, error: 'Correo o contraseña incorrectos.' };
+  if (error || !data.user) return { ok: false, error: 'Correo o contraseña incorrectos.', values: keep(formData, ['email']) };
 
   const [{ data: profile }, { count }] = await Promise.all([
     supabase.from('profiles').select('kind, is_platform_admin').eq('id', data.user.id).maybeSingle(),
@@ -50,7 +56,7 @@ export async function staffLogin(_: ActionResult | null, formData: FormData): Pr
 
   if (profile?.kind !== 'staff' || (!count && !profile?.is_platform_admin)) {
     await supabase.auth.signOut();
-    return { ok: false, error: 'Esta cuenta no tiene acceso al panel administrativo.' };
+    return { ok: false, error: 'Esta cuenta no tiene acceso al panel administrativo.', values: keep(formData, ['email']) };
   }
 
   const fallback = !count && profile?.is_platform_admin ? '/platform' : '/admin';
@@ -128,7 +134,7 @@ export async function changePassword(_: ActionResult | null, formData: FormData)
 
 export async function customerRegister(slug: string, _: ActionResult | null, formData: FormData): Promise<ActionResult> {
   const business = await getPublicBusiness(slug);
-  if (!business) return { ok: false, error: 'Este negocio no existe o no está activo.' };
+  if (!business) return { ok: false, error: 'Este negocio no existe o no está activo.', values: keep(formData, REGISTER_FIELDS) };
 
   const parsed = customerRegisterSchema.safeParse({
     firstName: formData.get('firstName'),
@@ -140,10 +146,10 @@ export async function customerRegister(slug: string, _: ActionResult | null, for
     marketingOptIn: formData.get('marketingOptIn') === 'on',
     acceptTerms: formData.get('acceptTerms') === 'on',
   });
-  if (!parsed.success) return { ok: false, error: 'Revisa los campos marcados.', fieldErrors: fieldErrors(parsed.error) };
+  if (!parsed.success) return { ok: false, error: 'Revisa los campos marcados.', fieldErrors: fieldErrors(parsed.error), values: keep(formData, REGISTER_FIELDS) };
   const phone = normalizePhone(parsed.data.phone, business.country_code);
-  if (!phone) return { ok: false, error: 'El teléfono no es válido.', fieldErrors: { phone: 'Revisa el número (10 dígitos).' } };
-  if (!(await rateLimit('customer-register', 10, 3600))) return TOO_MANY;
+  if (!phone) return { ok: false, error: 'El teléfono no es válido.', fieldErrors: { phone: 'Revisa el número (10 dígitos).' }, values: keep(formData, REGISTER_FIELDS) };
+  if (!(await rateLimit('customer-register', 10, 3600))) return { ...TOO_MANY, values: keep(formData, REGISTER_FIELDS) } as ActionResult;
 
   const authEmail = customerAuthEmail(phone);
   const admin = createAdminClient();
@@ -156,15 +162,22 @@ export async function customerRegister(slug: string, _: ActionResult | null, for
   const alreadyExists = createError && /already|exists|registered/i.test(createError.message);
   if (createError && !alreadyExists) {
     console.error('[customer-register]', createError.message);
-    return { ok: false, error: 'No pudimos crear tu cuenta. Inténtalo de nuevo.' };
+    const config = /invalid api key|jwt|unauthorized|forbidden/i.test(createError.message);
+    return {
+      ok: false,
+      error: config
+        ? 'El servicio de registro no está disponible por un problema de configuración. Avisa al personal del negocio.'
+        : 'No pudimos crear tu cuenta. Inténtalo de nuevo.',
+      values: keep(formData, REGISTER_FIELDS),
+    };
   }
 
   const supabase = await createClient();
   const { error: signInError } = await supabase.auth.signInWithPassword({ email: authEmail, password: parsed.data.password });
   if (signInError) {
     return alreadyExists
-      ? { ok: false, error: 'Ese teléfono ya tiene una cuenta. Inicia sesión con tu contraseña.', fieldErrors: { phone: 'Ya registrado.' } }
-      : { ok: false, error: 'Cuenta creada, pero no pudimos iniciar sesión. Intenta entrar.' };
+      ? { ok: false, error: 'Ese teléfono ya tiene una cuenta. Inicia sesión con tu contraseña.', fieldErrors: { phone: 'Ya registrado.' }, values: keep(formData, REGISTER_FIELDS) }
+      : { ok: false, error: 'Cuenta creada, pero no pudimos iniciar sesión. Intenta entrar.', values: keep(formData, REGISTER_FIELDS) };
   }
 
   const { error } = await supabase.rpc('join_business', {
@@ -174,22 +187,22 @@ export async function customerRegister(slug: string, _: ActionResult | null, for
     p_email: parsed.data.email,
     p_marketing_opt_in: parsed.data.marketingOptIn,
   });
-  if (error) return { ok: false, error: friendlyError(error) };
+  if (error) return { ok: false, error: friendlyError(error), values: keep(formData, REGISTER_FIELDS) };
   redirect(`/c/${slug}/tarjeta?bienvenida=1`);
 }
 
 export async function customerLogin(slug: string, _: ActionResult | null, formData: FormData): Promise<ActionResult> {
   const business = await getPublicBusiness(slug);
-  if (!business) return { ok: false, error: 'Este negocio no existe o no está activo.' };
+  if (!business) return { ok: false, error: 'Este negocio no existe o no está activo.', values: keep(formData, ['phone']) };
   const parsed = customerLoginSchema.safeParse({ phone: formData.get('phone'), password: formData.get('password') });
-  if (!parsed.success) return { ok: false, error: 'Revisa los datos.', fieldErrors: fieldErrors(parsed.error) };
+  if (!parsed.success) return { ok: false, error: 'Revisa los datos.', fieldErrors: fieldErrors(parsed.error), values: keep(formData, ['phone']) };
   const phone = normalizePhone(parsed.data.phone, business.country_code);
-  if (!phone) return { ok: false, error: 'El teléfono no es válido.', fieldErrors: { phone: 'Revisa el número.' } };
-  if (!(await rateLimit('customer-login', 15, 600))) return TOO_MANY;
+  if (!phone) return { ok: false, error: 'El teléfono no es válido.', fieldErrors: { phone: 'Revisa el número.' }, values: keep(formData, ['phone']) };
+  if (!(await rateLimit('customer-login', 15, 600))) return { ...TOO_MANY, values: keep(formData, ['phone']) } as ActionResult;
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword({ email: customerAuthEmail(phone), password: parsed.data.password });
-  if (error || !data.user) return { ok: false, error: 'Teléfono o contraseña incorrectos.' };
+  if (error || !data.user) return { ok: false, error: 'Teléfono o contraseña incorrectos.', values: keep(formData, ['phone']) };
 
   const { data: customer } = await supabase
     .from('customers')
