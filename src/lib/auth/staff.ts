@@ -73,7 +73,8 @@ export type ActiveStaffContext = StaffContext & { business: Business; role: Staf
 export async function requireStaff(roles?: StaffRole[]): Promise<ActiveStaffContext> {
   const ctx = await getStaffContext();
   if (!ctx) redirect('/admin/login');
-  if (!ctx.business || !ctx.role) redirect('/admin/sin-acceso');
+  // Sesión sin acceso al panel (p. ej. un cliente): pedir credenciales del personal.
+  if (!ctx.business || !ctx.role) redirect('/admin/login?acceso=1');
   if (roles && !roles.includes(ctx.role)) redirect('/admin?denegado=1');
   return ctx as ActiveStaffContext;
 }
