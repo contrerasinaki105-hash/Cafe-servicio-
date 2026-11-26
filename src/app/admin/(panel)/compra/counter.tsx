@@ -15,6 +15,8 @@ import { cn, formatDate, formatMoney, formatRelative } from '@/lib/utils';
 import { formatPhone } from '@/lib/phone';
 import type { CustomerOverview, StaffRole } from '@/lib/types';
 
+const QR_PATTERN = /^(?:webya:)?[a-f0-9]{24}$/i;
+
 type CounterData = NonNullable<Awaited<ReturnType<typeof getCustomerForCounter>>>;
 
 interface Props {
@@ -37,19 +39,6 @@ export function Counter({ role, maxStamps, stampsRequired, currency, timezone }:
   const isManager = role !== 'employee';
   const limit = isManager ? 20 : maxStamps;
 
-  // Búsqueda con espera breve mientras se escribe
-  useEffect(() => {
-    const q = query.trim();
-    if (q.length < 2) return;
-    const t = setTimeout(async () => {
-      const res = await searchCustomers(q);
-      setSearching(false);
-      if (res.ok) setResults(res.data ?? []);
-      else toast.error(res.error);
-    }, 250);
-    return () => clearTimeout(t);
-  }, [query]);
-
   const openCustomer = useCallback(async (id: string) => {
     setLoadingCustomer(true);
     const data = await getCustomerForCounter(id);
@@ -62,6 +51,27 @@ export function Counter({ role, maxStamps, stampsRequired, currency, timezone }:
     setResults(null);
     setQuery('');
   }, []);
+
+  // Búsqueda con espera breve mientras se escribe
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) return;
+    const t = setTimeout(async () => {
+      const res = await searchCustomers(q);
+      setSearching(false);
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+      // Código QR (cámara o lector USB/Bluetooth): abrir al cliente directamente.
+      if (QR_PATTERN.test(q) && res.data?.length === 1) {
+        openCustomer(res.data[0].id);
+        return;
+      }
+      setResults(res.data ?? []);
+    }, QR_PATTERN.test(q) ? 0 : 250);
+    return () => clearTimeout(t);
+  }, [query, openCustomer]);
 
   const onScan = useCallback(
     async (text: string) => {
